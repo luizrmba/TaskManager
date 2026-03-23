@@ -34,3 +34,6 @@ O objetivo é criar um sistema simples de gerenciamento de tarefas, permitindo c
 3. Rode o .py
    ```bash
    python TaskManager.py
+
+## Contato
+25118021@belasartes.edu.br
