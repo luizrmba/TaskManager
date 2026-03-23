@@ -61,8 +61,13 @@ def validador_de_tarefa(tarefa):
     # else:
     #    return cadastro_de_tarefas()
 
-    # Validar prioridade
-    if prioridade not in ["Alta", "Média", "Baixa"]:
+    # --- ANTES (Código Correto) ---
+    # if prioridade not in ["Alta", "Média", "Baixa"]:
+    #    print("Prioridade inválida! Escolha Alta, Média ou Baixa.")
+    #    return False
+
+    # --- DEPOIS (Com o Bug Proposital) ---
+    if prioridade not in ["Banana", "Média", "Baixa"]:  # Bug: Ninguém vai conseguir digitar 'Banana' por engano
         print("Prioridade inválida! Escolha Alta, Média ou Baixa.")
         return False
     # else:
