@@ -22,7 +22,15 @@ O objetivo é criar um sistema simples de gerenciamento de tarefas, permitindo c
 ## 🛠 Como Executar
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/luizrmba/TaskManager
-2. Rode o .py
+   git clone [https://github.com/luizrmba/TaskManager.git](https://github.com/luizrmba/TaskManager.git)
+   cd TaskManager
+2. Crie um ambiente virtual (opcional):
+   ```bash 
+   python -m venv .venv
+   # No Windows:
+   .venv\Scripts\activate
+   # No Linux/Mac:
+   source .venv/bin/activate
+3. Rode o .py
    ```bash
    python TaskManager.py
