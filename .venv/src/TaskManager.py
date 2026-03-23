@@ -1,59 +1,79 @@
-#Cadastramento de tarefas
-#Necessida do Python 3.10 e mais
+# Cadastramento de tarefas
+# Necessida do Python 3.10 e mais
 
-#import sqlite3 #para o banco de dados, mas melhor deixar em .txt no momento para deixar o exercicio simples
-#from dataclasses import dataclass #para validacao da tarefa
-from datetime import datetime #para validacao da tarefa2
-from pathlib import Path #para salvar as tarefas em .txt
+import sqlite3  # para o banco de dados, mas melhor deixar em .txt no momento para deixar o exercicio simples
+# from dataclasses import dataclass #para validacao da tarefa
+from datetime import datetime  # para validacao da tarefa2
+from pathlib import Path  # para salvar as tarefas em .txt
 import os
 
-#ARQUIVO_TXT = Path("tarefas.txt") #irá salvar o .txt no mesmo local onde está o .py
-#BASE_DIR = Path(__file__).parent #persistir o "banco de dados" no mesmo local onde está o .py
-#BASE_DIR = Path(__file__).parent  # persistir ao lado do .py
-#ARQUIVO_TXT = BASE_DIR / "tarefas.txt"  # garante salvamento junto do script
+# ARQUIVO_TXT = Path("tarefas.txt") #irá salvar o .txt no mesmo local onde está o .py
+# BASE_DIR = Path(__file__).parent #persistir o "banco de dados" no mesmo local onde está o .py
+# BASE_DIR = Path(__file__).parent  # persistir ao lado do .py
+# ARQUIVO_TXT = BASE_DIR / "tarefas.txt"  # garante salvamento junto do script
 # Cria a pasta Documentos do usuário
 DOCUMENTS_DIR = Path(os.path.expanduser("~/Documents"))
 DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
 # Arquivo será salvo SEMPRE nos Documentos
 ARQUIVO_TXT = DOCUMENTS_DIR / "tarefas.txt"
+BANCO_SQLITE = DOCUMENTS_DIR / "tarefas.db"
+
+
+# --- CONFIGURAÇÃO INICIAL DO BANCO ---
+def inicializar_banco():
+    conexao = sqlite3.connect(BANCO_SQLITE)
+    cursor = conexao.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tarefas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            data_vencimento TEXT NOT NULL,
+            prioridade TEXT NOT NULL
+        )
+    ''')
+    conexao.commit()
+    conexao.close()
+
 
 def cadastro_de_tarefas():
-    #tarefa = [nome, data_de_vencimento, prioridade]
+    # tarefa = [nome, data_de_vencimento, prioridade]
     nome = input("Digite o nome da tarefa: ").strip()
     data_de_vencimento = input("Digite a data de vencimento (DD/MM/AAAA HH:MM:SS): ").strip()
     prioridade = input("Digite a prioridade (Alta, Média ou Baixa): ").capitalize().strip()
     return [nome, data_de_vencimento, prioridade]
 
+
 def validador_de_tarefa(tarefa):
     nome, data_de_vencimento, prioridade = tarefa
 
-    #Validar nome
+    # Validar nome
     if not nome or not isinstance(nome, str) or len(nome) < 3:
         print("Nome inválido. Mínimo de 3 caracteres. Digite novamente.")
         return False
 
-    #Validar data
+    # Validar data
     try:
         datetime.strptime(data_de_vencimento, "%d/%m/%Y %H:%M:%S")
     except ValueError:
         print("Data inválida! Use o formato DD/MM/AAAA HH:MM:SS.")
-    #if data_de_vencimento in tarefa is time: #Segue padrão DD/MM/AAAA, HH:MM:SS)
+    # if data_de_vencimento in tarefa is time: #Segue padrão DD/MM/AAAA, HH:MM:SS)
     #    continue
-    #else:
+    # else:
     #    return cadastro_de_tarefas()
 
-    #Validar prioridade
+    # Validar prioridade
     if prioridade not in ["Alta", "Média", "Baixa"]:
         print("Prioridade inválida! Escolha Alta, Média ou Baixa.")
         return False
-    #else:
-        #return cadastro_de_tarefas()
+    # else:
+    # return cadastro_de_tarefas()
 
     return True
 
-#-------- persistência em TXT ----------
 
-def salvar_tarefa_txt(tarefa): #Para que não crie erros de permissão de erro
+# -------- persistência em TXT ----------
+
+def salvar_tarefa_txt(tarefa):  # Para que não crie erros de permissão de erro
     linha = ";".join(tarefa)
     try:
         with ARQUIVO_TXT.open("a", encoding="utf-8") as f:
@@ -62,6 +82,28 @@ def salvar_tarefa_txt(tarefa): #Para que não crie erros de permissão de erro
         print(f"[ERRO] Sem permissão para gravar em: {ARQUIVO_TXT.resolve()}")
         print("Dica: rode pelo terminal na pasta do projeto, ou mova a pasta para Documentos.")
         raise
+
+
+# -------- persistência em SQLITE --------
+
+def salvar_tarefa_sqlite(tarefa):
+    conexao = sqlite3.connect(BANCO_SQLITE)
+    cursor = conexao.cursor()
+    cursor.execute('''
+        INSERT INTO tarefas (nome, data_vencimento, prioridade)
+        VALUES (?, ?, ?)
+    ''', tarefa)
+    conexao.commit()
+    conexao.close()
+
+
+def carregar_tarefas_sqlite():
+    conexao = sqlite3.connect(BANCO_SQLITE)
+    cursor = conexao.cursor()
+    cursor.execute('SELECT nome, data_vencimento, prioridade FROM tarefas')
+    tarefas = cursor.fetchall()
+    conexao.close()
+    return tarefas
 
 
 def carregar_tarefas_txt():
@@ -75,36 +117,40 @@ def carregar_tarefas_txt():
                 tarefas.append(partes)  # [nome, data, prioridade]
     return tarefas
 
+
 def mostrar_lista(tarefas):
     if not tarefas:
         print("\nNenhuma tarefa cadastrada ainda.")
         return
-    print("\n=== Tarefas cadastradas (TXT) ===")
+    print("\n=== Tarefas cadastradas (DB SQLITE) ===")
     for i, (nome, data, pri) in enumerate(tarefas, start=1):
         print(f"{i:02d}. {nome} | {data} | {pri}")
 
-#------------------ fluxo principal -----------------------
+
+# ------------------ fluxo principal -----------------------
 if __name__ == "__main__":
+    inicializar_banco()  # Garante que a tabela existe antes de começar
+
     tarefa = cadastro_de_tarefas()
     while not validador_de_tarefa(tarefa):
         print("\n--- Tente novamente ---\n")
         tarefa = cadastro_de_tarefas()
 
-    salvar_tarefa_txt(tarefa)
-    print("\nTarefa salva em tarefas.txt com sucesso!")
+    salvar_tarefa_sqlite(tarefa)  # Agora salvando no Banco de Dados
+    print(f"\nTarefa salva em {BANCO_SQLITE.name} com sucesso!")
 
-#print("\nTarefa cadastrada com sucesso!")
-#print("Conteúdo:", tarefa)
+    # print("\nTarefa cadastrada com sucesso!")
+    # print("Conteúdo:", tarefa)
 
-#Atualizar interface
+    # Atualizar interface
 
-    lista = carregar_tarefas_txt()
+    lista = carregar_tarefas_sqlite()
     mostrar_lista(lista)
-print(f"(Info) Suas tarefas serão salvas em: {ARQUIVO_TXT.resolve()}")
-#if validador_de_tarefa() is True:
-    # copia e colar a Tarefa publicado em uma linha
-    # publica a Tarefa cadastrada em uma .txt
+print(f"(Info) Suas tarefas serão salvas em: {BANCO_SQLITE.resolve()}")
+# if validador_de_tarefa() is True:
+# copia e colar a Tarefa publicado em uma linha
+# publica a Tarefa cadastrada em uma .txt
 #   exit
-    # "Sua tarefa foi publicado em .nova_tarefa.txt"
-#else:
-#    cadastro_de_tarefas()
+# "Sua tarefa foi publicado em .nova_tarefa.txt"
+# else:
+#    cadastro_de_tarefas(
